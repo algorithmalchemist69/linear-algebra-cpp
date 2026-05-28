@@ -1,0 +1,798 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[margin=2.5cm, headheight=14.5pt]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{microtype}
+
+% ── Colours ──────────────────────────────────────────────────────────────────
+\definecolor{strangblue}{RGB}{0, 70, 140}
+\definecolor{alggreen}{RGB}{20, 100, 50}
+\definecolor{cppgray}{RGB}{40, 40, 40}
+\definecolor{lightblue}{RGB}{230, 242, 255}
+\definecolor{lightgreen}{RGB}{230, 255, 240}
+
+% ── Hyperref setup ───────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true,
+  linkcolor=strangblue,
+  citecolor=strangblue,
+  urlcolor=alggreen,
+  pdftitle={Linear Algebra Analyzer — C++ Project Documentation},
+  pdfauthor={Sarvesh S}
+}
+
+% ── Section formatting ───────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{strangblue}}{}{0em}{\thesection\quad}
+\titleformat{\subsection}{\normalsize\bfseries\color{strangblue!80!black}}{}{0em}{\thesubsection\quad}
+\titleformat{\subsubsection}{\normalsize\bfseries}{}{0em}{\thesubsubsection\quad}
+
+% ── C++ code style ───────────────────────────────────────────────────────────
+\lstset{
+  language=C++,
+  basicstyle=\footnotesize\ttfamily\color{cppgray},
+  keywordstyle=\bfseries\color{strangblue},
+  commentstyle=\itshape\color{gray},
+  stringstyle=\color{alggreen},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  rulecolor=\color{strangblue!30},
+  breaklines=true,
+  tabsize=4,
+  showstringspaces=false,
+  captionpos=b
+}
+
+% ── Theorem environments ─────────────────────────────────────────────────────
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\tcbuselibrary{skins, breakable}
+\newtcolorbox{strangbox}[1]{
+  colback=lightblue, colframe=strangblue,
+  fonttitle=\bfseries\small, title=#1,
+  arc=4pt, boxrule=0.8pt
+}
+\newtcolorbox{algobox}[1]{
+  colback=lightgreen, colframe=alggreen,
+  fonttitle=\bfseries\small, fontupper=\small, title=#1,
+  arc=4pt, boxrule=0.8pt
+}
+
+% ── Header / Footer ──────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small\color{strangblue}Linear Algebra Analyzer — C++ Project}
+\rhead{\small\color{gray}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Math macros ──────────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Null}{\mathcal{N}}
+\newcommand{\Col}{\mathcal{C}}
+\newcommand{\Row}{\mathcal{R}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\trace}{\operatorname{tr}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\vspan}{\operatorname{span}}
+\newcommand{\Ap}{A^{+}}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{document}
+
+% ── Title Page ───────────────────────────────────────────────────────────────
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+{\huge\bfseries\color{strangblue} Linear Algebra Analyzer}\\[0.5em]
+{\large\color{gray} A Comprehensive C++ Implementation}\\[2em]
+\rule{0.7\textwidth}{0.5pt}\\[1.5em]
+{\normalsize
+  Covering: RREF $\cdot$ LU/QR/SVD Decompositions $\cdot$ Four Fundamental Subspaces\\[0.3em]
+  Eigenvalues \& Eigenvectors $\cdot$ Jordan Form $\cdot$ Projections $\cdot$ Positive Definiteness\\[0.3em]
+  Similar Matrices $\cdot$ Change of Basis $\cdot$ Ax = b Solver
+}\\[1.5em]
+\rule{0.7\textwidth}{0.5pt}\\[2em]
+
+{\large Sarvesh S}\\[0.4em]
+{\small IIT Madras \quad|\quad \texttt{ed23b042@smail.iitm.ac.in}}\\[1em]
+{\small\color{gray} GitHub: \texttt{algorithmalchemist69/linear-algebra-cpp}}\\[3em]
+
+\begin{tcolorbox}[colback=lightblue, colframe=strangblue, width=0.75\textwidth,
+  arc=6pt, boxrule=0.8pt]
+\centering\small
+\textbf{Theory basis:} Gilbert Strang, \emph{Introduction to Linear Algebra}
+(5th ed.) and \emph{Linear Algebra and Its Applications}.\\[0.3em]
+Numerical methods are explicitly identified throughout this document
+where they go beyond what Strang's textbook covers.
+\end{tcolorbox}
+
+\vfill
+{\small\color{gray}\today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Project Overview}
+% ─────────────────────────────────────────────────────────────────────────────
+
+This project is a self-contained C++ (C++17) command-line tool that performs
+complete linear algebra analysis on an arbitrary $m \times n$ real matrix $A$
+entered by the user.  It implements every major topic from Gilbert Strang's
+linear algebra curriculum plus several classical numerical algorithms required
+to make those topics computationally feasible.
+
+\subsection*{File structure}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+File & Size & Purpose \\
+\midrule
+\texttt{linalg.h}   & $\sim$120 lines & Class declaration and result-type structs \\
+\texttt{linalg.cpp} & $\sim$450 lines & Full implementation of all algorithms \\
+\texttt{main.cpp}   & $\sim$200 lines & Interactive CLI, formatted output \\
+\texttt{Makefile}   & 8 lines         & Build with \texttt{g++ -std=c++17 -O2} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Build and run}
+\begin{lstlisting}[language=bash, numbers=none]
+cd linear_algebra
+make              # compiles all three sources into ./linalg
+./linalg          # enter dimensions and matrix interactively
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Strang's ``Big Picture'' of Linear Algebra}
+% ─────────────────────────────────────────────────────────────────────────────
+
+The conceptual backbone of the project is Strang's \emph{Big Picture}:
+every matrix $A \in \R^{m \times n}$ of rank $r$ divides both $\R^n$ and
+$\R^m$ into two orthogonal pairs of subspaces.
+
+\begin{strangbox}{The Four Fundamental Subspaces (Strang Ch.\ 3)}
+\begin{align*}
+  \R^n &= \underbrace{\Col(A^T)}_{\text{row space, dim }r}
+         \;\perp\;
+         \underbrace{\Null(A)}_{\text{null space, dim }n-r} \\[1em]
+  \R^m &= \underbrace{\Col(A)}_{\text{column space, dim }r}
+         \;\perp\;
+         \underbrace{\Null(A^T)}_{\text{left null space, dim }m-r}
+\end{align*}
+\end{strangbox}
+
+This decomposition is central to understanding solvability ($Ax=b$ has a
+solution iff $b \in \Col(A)$), the structure of solutions (particular solution
+plus any element of $\Null(A)$), and the geometry of projections.
+\textbf{The project computes all four subspaces and their orthonormal bases.}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Implemented Operations — Theory and Implementation}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Row Reduction and Reduced Row Echelon Form (RREF)}
+
+\textbf{Strang reference:} Ch.\ 2 (Elimination), Ch.\ 3 (Vector Spaces).
+
+Given $A \in \R^{m \times n}$, Gauss-Jordan elimination transforms $A$ into
+its unique RREF $R$.  The algorithm finds pivot positions, establishes rank
+$r$, identifies free variables, and directly produces a basis for all four
+fundamental subspaces.
+
+\begin{algobox}{Algorithm: Gauss-Jordan (RREF)}
+\textbf{Input:} $A \in \R^{m\times n}$\\
+\textbf{Output:} RREF $R$, list of pivot columns, rank $r$\\
+\textbf{Steps:}
+\begin{enumerate}[leftmargin=*, noitemsep]
+  \item For each column $j$ (left to right), among rows $\geq$ current pivot row,
+        find the row with the largest absolute entry (\emph{partial pivoting}).
+        Swap it to the current pivot row.
+  \item Divide the pivot row by its pivot entry (make pivot = 1).
+  \item Eliminate \emph{all} other rows (both above and below) in column $j$.
+  \item Record $j$ as a pivot column; advance to next pivot row.
+\end{enumerate}
+\end{algobox}
+
+\noindent
+\textbf{Numerical method note:} Partial pivoting (choosing the largest
+absolute entry as pivot) is a standard numerical stabilization technique,
+\emph{not} part of Strang's theoretical treatment but essential in practice
+to prevent division by near-zero numbers and amplification of floating-point
+errors.
+
+\medskip
+\noindent
+\textbf{Outputs extracted from RREF:}
+\begin{itemize}[noitemsep]
+  \item $\rank(A) = r$ = number of pivot columns.
+  \item \textbf{Pivot positions:} pairs $(i_k, j_k)$ where the $k$-th leading 1 sits.
+  \item \textbf{Null space basis:} for each free column $f$, the vector
+        $\mathbf{x}_f$ with $x_f = 1$, $x_{f'} = 0$ for other free columns,
+        and $x_{p_k} = -R_{k,f}$ for each pivot row $k$.
+  \item \textbf{Row space basis:} the nonzero rows of $R$.
+  \item \textbf{Column space basis:} the pivot columns of the \emph{original} $A$.
+  \item \textbf{Left null space basis:} null space of $A^T$ (computed by applying
+        the same procedure to $A^T$).
+\end{itemize}
+
+\subsection{LU Decomposition with Partial Pivoting}
+
+\textbf{Strang reference:} Ch.\ 2 ($A = LU$).
+
+For a square matrix $A$, we factor $PA = LU$ where $P$ is a permutation matrix
+(recording row swaps), $L$ is unit lower triangular, and $U$ is upper triangular.
+
+\begin{strangbox}{Why LU?}
+Gaussian elimination \emph{is} LU factorization. Strang shows that the
+multipliers $\ell_{ij} = a_{ij}/a_{jj}$ (at the time of elimination) fill the
+lower triangle of $L$. The upper triangle of $U$ is what remains after
+elimination.
+\end{strangbox}
+
+\noindent
+\textbf{Partial pivoting:} at step $k$, the row with the largest $|a_{ik}|$
+($i \geq k$) is swapped to position $k$ and recorded in $P$.  This guarantees
+$|L_{ij}| \leq 1$ for all $i > j$, bounding error growth.
+
+\medskip
+\noindent
+\textbf{Use in the project:} LU is used to compute:
+\begin{itemize}[noitemsep]
+  \item $\det(A) = (-1)^s \prod_i U_{ii}$, where $s$ = number of row swaps.
+  \item Forward/back substitution for $Ax=b$ when $A$ is square and nonsingular.
+  \item Display: $L$, $U$, $P$ are printed separately.
+\end{itemize}
+
+\subsection{QR Decomposition via Modified Gram-Schmidt}
+
+\textbf{Strang reference:} Ch.\ 4 (Orthogonality), Gram-Schmidt.
+
+For $A \in \R^{m \times n}$ with $m \geq n$, we write $A = QR$ where
+$Q \in \R^{m \times n}$ has orthonormal columns and $R \in \R^{n \times n}$
+is upper triangular.
+
+\begin{algobox}{Algorithm: Modified Gram-Schmidt (MGS)}
+\textbf{Input:} $A$ with columns $\mathbf{a}_1, \ldots, \mathbf{a}_n$\\
+\textbf{Output:} $Q$ (orthonormal columns), $R$ (upper triangular)\\
+\textbf{Steps:} for $j = 1, \ldots, n$:
+\begin{enumerate}[leftmargin=*, noitemsep]
+  \item $R_{jj} \leftarrow \|\mathbf{u}_j\|$ (norm of current working column).
+        If $R_{jj} < \varepsilon$, skip (linearly dependent column).
+  \item $\mathbf{q}_j \leftarrow \mathbf{u}_j / R_{jj}$.
+  \item For $k > j$: $R_{jk} \leftarrow \mathbf{q}_j^T \mathbf{u}_k$;
+        $\mathbf{u}_k \leftarrow \mathbf{u}_k - R_{jk}\,\mathbf{q}_j$
+        (project out the new $\mathbf{q}_j$ \emph{immediately}).
+\end{enumerate}
+\end{algobox}
+
+\noindent
+\textbf{Classical vs Modified Gram-Schmidt:} Classical GS subtracts
+projections onto \emph{all} previously found $\mathbf{q}$ vectors at the end.
+Modified GS subtracts each projection \emph{as it is found}.  Both give the
+same result in exact arithmetic, but MGS is significantly more numerically
+stable: the loss of orthogonality in CGS is $O(\varepsilon\,\kappa^2)$ while
+MGS achieves $O(\varepsilon\,\kappa)$, where $\kappa = \|A\|\|A^{-1}\|$ is
+the condition number.  This is a \emph{numerical methods} distinction beyond
+Strang's theoretical treatment.
+
+\medskip
+\noindent
+\textbf{Uses in the project:} QR decomposition is displayed to the user and
+also serves as the workhorse inside the eigenvalue QR iteration (Sec.\ 3.9).
+
+\subsection{Singular Value Decomposition (SVD)}
+
+\textbf{Strang reference:} Ch.\ 7 ($A = U\Sigma V^T$, the pinnacle of linear
+algebra).
+
+The SVD writes any $A \in \R^{m \times n}$ as
+\[
+  A = U \Sigma V^T
+\]
+where $U \in \R^{m \times m}$ and $V \in \R^{n \times n}$ are orthogonal and
+$\Sigma \in \R^{m \times n}$ is diagonal with singular values
+$\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_r > 0 = \sigma_{r+1} = \cdots$.
+Strang calls this ``the most important factorization in linear algebra.''
+
+\begin{strangbox}{SVD and the Four Subspaces (Strang Ch.\ 7)}
+\begin{itemize}[noitemsep]
+  \item \textbf{Columns of $V$}: orthonormal basis for $\R^n$ split into
+        row space ($v_1,\ldots,v_r$) and null space ($v_{r+1},\ldots,v_n$).
+  \item \textbf{Columns of $U$}: orthonormal basis for $\R^m$ split into
+        column space ($u_1,\ldots,u_r$) and left null space ($u_{r+1},\ldots,u_m$).
+  \item $A v_i = \sigma_i u_i$ for $i = 1,\ldots,r$; \quad $A v_i = 0$ for
+        $i > r$.
+\end{itemize}
+\end{strangbox}
+
+\noindent
+\textbf{Numerical method used — SVD via eigendecomposition of $A^TA$:}
+
+The project computes SVD using the following steps, which are a \emph{numerical
+methods choice} (not an algorithm Strang derives in detail):
+\begin{enumerate}[noitemsep]
+  \item Form the symmetric PSD matrix $B = A^T A \in \R^{n \times n}$.
+  \item Compute the eigendecomposition of $B$ (using the QR iteration,
+        Sec.\ 3.9): $B = V \Lambda V^T$, with $\lambda_i = \sigma_i^2$.
+  \item Sort eigenvalues descending; form $\sigma_i = \sqrt{\lambda_i}$.
+  \item For each nonzero $\sigma_i$: $\mathbf{u}_i = A\mathbf{v}_i / \sigma_i$.
+  \item Complete $U$ with an orthonormal basis for $\Null(A^T)$ via
+        iterated Gram-Schmidt against the existing $\mathbf{u}_i$.
+\end{enumerate}
+
+\textbf{Limitation:} The numerically preferred algorithm is Golub-Reinsch
+bidiagonalization (used in LAPACK's \texttt{dgesvd}).  The
+$A^TA$ approach can lose relative accuracy for small singular values because
+squaring the matrix squares the condition number.  For the pedagogical matrices
+(size $\leq 6$) typical in a course, this is entirely sufficient.
+
+\subsection{The Four Fundamental Subspaces}
+
+\textbf{Strang reference:} Ch.\ 3.5 (``Dimensions of the Four Subspaces'').
+
+All four subspaces are extracted from the RREF computation:
+
+\begin{center}
+\small\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{p{2.6cm} p{2.2cm} p{1.8cm} p{6.0cm}}
+\toprule
+Subspace & Notation & Dim & How computed \\
+\midrule
+Null space & $\Null(A)$ & $n - r$ & Free-variable vectors from RREF \\
+Column space & $\Col(A)$ & $r$ & Pivot columns of original $A$ \\
+Row space & $\Col(A^T)$ & $r$ & Nonzero rows of RREF, stored as columns \\
+Left null space & $\Null(A^T)$ & $m - r$ & Null space of $A^T$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+\textbf{Rank-Nullity Theorem:} $\rank(A) + \text{nullity}(A) = n$ (columns),
+confirmed numerically for every matrix entered.
+
+\subsection{Orthonormal Bases via Gram-Schmidt}
+
+Strang emphasizes that orthonormal bases are ``the best'' bases for
+computation (Chapters 4 and 7).  The project applies the Gram-Schmidt process
+to the basis vectors of each of the four subspaces to produce orthonormal
+bases:
+\[
+  \text{Orth}\,\Null(A),\quad
+  \text{Orth}\,\Col(A),\quad
+  \text{Orth}\,\Col(A^T),\quad
+  \text{Orth}\,\Null(A^T).
+\]
+The implementation uses Modified Gram-Schmidt (Sec.\ 3.3), skipping any column
+whose projection onto the existing orthonormal set falls below $\varepsilon =
+10^{-9}$ (numerically linearly dependent).
+
+\subsection{Projection Matrices}
+
+\textbf{Strang reference:} Ch.\ 4.2 (Projections onto subspaces).
+
+\begin{strangbox}{Projection Formula (Strang)}
+If $A$ has full column rank, the projection onto $\Col(A)$ is
+\[
+  P = A(A^T A)^{-1}A^T.
+\]
+For the general (possibly rank-deficient) case, replace $(A^TA)^{-1}A^T$
+with the Moore-Penrose pseudoinverse $\Ap$:
+\[
+  P_{\Col(A)} = A\Ap, \qquad P_{\Null(A)} = I - P_{\Col(A)}.
+\]
+\end{strangbox}
+
+\noindent
+The project computes three projection matrices:
+\begin{itemize}[noitemsep]
+  \item $P_{\text{col}}$: onto column space (via pseudoinverse, handles all ranks).
+  \item $P_{\text{null}} = I - P_{\text{col}}$: onto null space.
+  \item $P_{\text{row}}$: onto row space (computed as $P_{\text{col}}(A^T)$
+        applied to $A^T$).
+\end{itemize}
+These satisfy $P^2 = P$ (idempotent) and $P^T = P$ (symmetric).
+
+\subsection{Solving $Ax = b$ — Least Squares via Pseudoinverse}
+
+\textbf{Strang reference:} Ch.\ 4.3 (Least squares), Ch.\ 7.4 (Pseudoinverse).
+
+Given $A \in \R^{m \times n}$ and $b \in \R^m$, the project finds the
+minimum-norm least-squares solution:
+\[
+  \hat{x} = \Ap b = V\Sigma^+U^T b
+\]
+where $\Sigma^+$ replaces each nonzero $\sigma_i$ with $1/\sigma_i$.
+
+\begin{strangbox}{Three Cases (Strang Big Picture)}
+\begin{itemize}[noitemsep]
+  \item $b \in \Col(A)$: exact solution exists; $\hat{x}$ is the one
+        with $\hat{x} \in \Col(A^T)$ (minimum norm).
+  \item $b \notin \Col(A)$: no exact solution; $\hat{x}$ minimizes
+        $\|Ax - b\|_2$ (projection of $b$ onto $\Col(A)$).
+  \item $A$ full rank, square: $\hat{x} = A^{-1}b$ (unique solution).
+\end{itemize}
+\end{strangbox}
+
+The residual $\|A\hat{x} - b\|_2$ is printed; if it is $> 10^{-6}$, the
+program notes that $b \notin \Col(A)$ and $\hat{x}$ is only a least-squares
+solution.
+
+\subsection{Determinant}
+
+\textbf{Strang reference:} Ch.\ 5 (Determinants).
+
+The determinant is computed via Gaussian elimination (without RREF — only
+forward elimination to $U$):
+\[
+  \det(A) = (-1)^s \prod_{i=1}^n U_{ii}
+\]
+where $s$ is the number of row swaps performed during partial pivoting.
+Strang's three properties of the determinant (anti-symmetry under row
+exchange, multilinearity, $\det(I)=1$) all hold for this formula.  If any
+$U_{ii} = 0$ (within tolerance $\varepsilon$), $\det(A) = 0$ is returned
+immediately.
+
+\subsection{Eigenvalues and Eigenvectors}
+
+\textbf{Strang reference:} Ch.\ 6.
+
+The project uses \textbf{two different algorithms} depending on whether $A$
+is symmetric.
+
+\subsubsection{Symmetric matrices — QR Iteration}
+
+\begin{strangbox}{Spectral Theorem (Strang Ch.\ 6.4)}
+Every real symmetric matrix has real eigenvalues and an orthonormal eigenvector
+basis: $A = Q\Lambda Q^T$.
+\end{strangbox}
+
+\begin{algobox}{Algorithm: Unshifted QR Iteration (symmetric case)}
+\textbf{Input:} symmetric $A \in \R^{n \times n}$\\
+\textbf{Output:} eigenvalues (diagonal of $T$), eigenvectors (columns of $V$)\\
+\textbf{Initialise:} $T \leftarrow A$, $V \leftarrow I$.\\
+\textbf{Iterate:} while
+$\|\text{off-diagonal entries of }T\|_F > \varepsilon n$:
+\begin{enumerate}[leftmargin=*, noitemsep]
+  \item Factor $T = QR$ (Modified Gram-Schmidt).
+  \item $T \leftarrow RQ$ \quad (reverse the order).
+  \item $V \leftarrow VQ$ \quad (accumulate orthogonal factors).
+\end{enumerate}
+\textbf{Return:} eigenvalues = $T_{ii}$; eigenvectors = columns of $V$.
+\end{algobox}
+
+\textbf{Why it works:} each step performs a similarity transformation
+$T \leftarrow Q^T T Q = RQ$ (since $T = QR \Rightarrow RQ = Q^{-1}TQ$), so
+eigenvalues are preserved.  For symmetric $A$, the off-diagonal Frobenius
+norm decreases monotonically (Strang Ch.\ 6 discusses diagonalization;
+the convergence proof uses the fact that all eigenvalues are real and the QR
+step is a similarity). Convergence rate is $O(|\lambda_i/\lambda_{i+1}|^k)$
+per iteration, which is fast when eigenvalues are well-separated.
+
+\textbf{Why unshifted (not Rayleigh-quotient shifted):}  A shifted variant
+$T - \mu I = QR$, $T \leftarrow RQ + \mu I$ accelerates convergence
+dramatically, but when the shift $\mu$ equals an eigenvalue \emph{exactly}
+(e.g., a matrix with a repeated eigenvalue of 2), the shifted $T - \mu I$
+becomes singular and the QR decomposition fails — a column has norm zero and
+no valid unit vector can be formed. The unshifted iteration avoids this
+completely, at the cost of slower convergence (still $< 200$ iterations for
+typical $3 \times 3$ matrices).
+
+\subsubsection{General (non-symmetric) matrices — Faddeev-LeVerrier + Durand-Kerner}
+
+Non-symmetric matrices may have complex eigenvalues (e.g., a cyclic
+permutation matrix has eigenvalues that are cube roots of unity).  Pure QR
+iteration on such matrices can cycle without converging (a cyclic permutation's
+QR factorization gives $Q = A$, $R = I$, so $RQ = A$ — no change at all).
+Two classical numerical algorithms are combined to handle this correctly.
+
+\medskip\noindent\textbf{Step 1 --- Faddeev-LeVerrier Algorithm (characteristic polynomial).}\par\medskip\noindent
+\begin{algobox}{Algorithm: Faddeev-LeVerrier}
+\textbf{Input:} $A \in \R^{n\times n}$.
+\quad\textbf{Initialise:} $B \leftarrow I_n$.
+
+\noindent\textbf{Output:} coefficients $c_0,\ldots,c_{n-1}$ of
+\,$p(\lambda) = \lambda^n + c_{n-1}\lambda^{n-1} + \cdots + c_0\,$
+($= \det(\lambda I - A)$).
+
+\medskip
+\noindent\textbf{For} $k = 1, 2, \ldots, n$:
+\begin{enumerate}[leftmargin=*, noitemsep]
+  \item $B \leftarrow AB$
+  \item $c_{n-k} \leftarrow -\trace(B)\,/\,k$
+  \item If $k < n$: $B \leftarrow B + c_{n-k}\,I$
+\end{enumerate}
+\end{algobox}
+
+This gives the exact characteristic polynomial via $n$ matrix multiplications.
+By the Cayley-Hamilton theorem, $p(A) = 0$.  The coefficients have direct
+algebraic meaning: $c_{n-1} = -\trace(A)$, $c_0 = (-1)^n \det(A)$, and the
+intermediate $c_k$ are sums of $k \times k$ principal minors (Strang Ch.\ 5
+discusses minors; Faddeev-LeVerrier is a \textbf{numerical method} beyond his
+scope).
+
+\medskip\noindent\textbf{Step 2 --- Durand-Kerner simultaneous root-finding.}\par\medskip\noindent
+\begin{algobox}{Algorithm: Durand-Kerner (Weierstrass method)}
+\textbf{Input:} degree-$n$ polynomial $p$.
+\quad\textbf{Output:} all roots $z_1,\ldots,z_n \in \C$.
+
+\noindent\textbf{Init:} place $z_k$ on a circle of radius
+$r_0 = 1 + \max_j |c_j/c_n|$ (Cauchy bound):
+$z_k \leftarrow r_0\,e^{2\pi i k/n + 0.17i}$.
+
+\noindent\textbf{Iterate} until $\max_i |z_i^{\text{new}} - z_i| < 10^{-12}$:
+\[
+  z_i \;\leftarrow\; z_i - \frac{p(z_i)}{\prod_{j \neq i}(z_i - z_j)}
+  \qquad \forall\, i = 1,\ldots,n
+\]
+\end{algobox}
+
+\textbf{Why this works:} the correction term is the Newton step for the
+deflated polynomial $p(z)/\prod_{j \neq i}(z - z_j)$, whose root near $z_i$
+is exactly $z_i$ itself.  All $n$ roots are updated \emph{simultaneously},
+giving global quadratic convergence for simple roots.  This algorithm naturally
+finds complex roots — the iterates $z_k$ live in $\C$ from the start —
+making it ideal for general matrices.
+
+\textbf{Numerical considerations:}
+\begin{itemize}[noitemsep]
+  \item \emph{Repeated roots:} Durand-Kerner converges linearly (not
+        quadratically) at multiple roots.  Small spurious imaginary parts
+        ($|\text{Im}(z_i)| \sim 10^{-5}$) arise.  The project classifies an
+        eigenvalue as ``real'' when $|\text{Im}(z_i)| < 10^{-4}\max(1, |\text{Re}(z_i)|)$,
+        handling this gracefully.
+  \item \emph{Eigenvalue grouping in Jordan analysis:} near-equal roots are
+        clustered with relative tolerance $10^{-3}$ to count algebraic
+        multiplicity.
+\end{itemize}
+
+\paragraph{Eigenvectors.}  For each real eigenvalue $\lambda_k$, the
+eigenvector is found by computing $\Null(A - \lambda_k I)$ via RREF — which
+is exactly Strang's method of ``solving $(A - \lambda I)\mathbf{x} = 0$.''
+For complex eigenvalues, eigenvectors require complex arithmetic and are not
+computed (the Jordan form analysis uses only multiplicities).
+
+\subsection{Positive Definiteness}
+
+\textbf{Strang reference:} Ch.\ 6.5 (``Positive Definite Matrices'').
+
+\begin{strangbox}{Strang's Tests for Positive Definiteness}
+A symmetric matrix $A$ is positive definite iff \emph{any one} of these hold:
+(a) all eigenvalues $\lambda_i > 0$; (b) all pivots $> 0$; (c) all
+upper-left determinants $> 0$; (d) $\mathbf{x}^T A \mathbf{x} > 0$ for all
+$\mathbf{x} \neq 0$.
+\end{strangbox}
+
+The project uses criterion (a): calls the eigenvalue solver and checks all
+real eigenvalues are $> \varepsilon$.  Similarly, $A$ is positive semi-definite
+iff all eigenvalues are $\geq -\varepsilon$.
+
+\subsection{Jordan Form and Number of Jordan Blocks}
+
+\textbf{Strang reference:} Ch.\ 6 (briefly; Jordan form is the general
+structure when eigenvectors do not span $\R^n$).
+
+\begin{strangbox}{Jordan Decomposition}
+Every square matrix $A$ is similar to its Jordan form $J = P^{-1}AP$, where
+$J$ is block-diagonal with Jordan blocks of the form
+\[
+  J_k(\lambda) = \begin{pmatrix} \lambda & 1 & & \\ & \lambda & \ddots & \\ & & \ddots & 1 \\ & & & \lambda \end{pmatrix}.
+\]
+\end{strangbox}
+
+\noindent
+\textbf{Key quantities for each eigenvalue $\lambda$:}
+\begin{itemize}[noitemsep]
+  \item \textbf{Algebraic multiplicity} $m_a$: how many times $\lambda$
+        appears as a root of $p(\lambda) = \det(\lambda I - A)$.
+  \item \textbf{Geometric multiplicity} $m_g = \dim\Null(A - \lambda I) = n - \rank(A - \lambda I)$:
+        how many linearly independent eigenvectors correspond to $\lambda$.
+  \item \textbf{Number of Jordan blocks} for $\lambda$ = $m_g$.
+  \item $A$ is diagonalizable iff $m_a = m_g$ for every eigenvalue.
+\end{itemize}
+
+\noindent
+\textbf{Jordan block sizes:} the $m_g$ blocks for eigenvalue $\lambda$ have
+sizes that sum to $m_a$.  The project distributes them as evenly as possible
+(first block gets any extra 1 if $m_a$ is not divisible by $m_g$).
+The geometric multiplicity is computed directly from $\rank(A - \lambda I)$
+via RREF.
+
+\subsection{Similar Matrices and Change of Basis}
+
+\textbf{Strang reference:} Ch.\ 6.2 (Diagonalization $A = S\Lambda S^{-1}$),
+Ch.\ 7 (Change of basis).
+
+Two matrices $A, B \in \R^{n \times n}$ are \emph{similar} ($A \sim B$) if
+$B = P^{-1}AP$ for some invertible $P$.  Similar matrices represent the same
+linear transformation in different bases; they have the same eigenvalues,
+the same determinant, the same trace, and the same Jordan form.
+
+\medskip
+\noindent
+The project computes:
+\begin{itemize}[noitemsep]
+  \item \textbf{Change-of-basis matrix:} given $P$, returns $P^{-1}AP$.
+  \item \textbf{Similarity check:} compares eigenvalue multisets and
+        determinants between two matrices.
+  \item \textbf{Diagonalization:} when $A$ is diagonalizable, displays
+        $P^{-1}AP \approx \Lambda$ using $P =$ eigenvector matrix, confirming
+        Strang's formula $A = S\Lambda S^{-1}$.
+\end{itemize}
+
+\subsection{Inverse and Pseudoinverse}
+
+\textbf{Strang reference:} Ch.\ 2 ($A^{-1}$), Ch.\ 7.4 ($\Ap$).
+
+\paragraph{Inverse.} Computed by Gauss-Jordan on the augmented matrix
+$[A \mid I]$: reduce $A$ to $I$ and the right half becomes $A^{-1}$.
+Error is thrown if $|\det(A)| < \varepsilon$ (singular matrix).
+
+\paragraph{Moore-Penrose Pseudoinverse.}
+\[
+  \Ap = V\Sigma^+ U^T
+\]
+where $\Sigma^+$ is formed by replacing each nonzero diagonal entry $\sigma_i$
+of $\Sigma$ with $1/\sigma_i$.  This generalizes the inverse:
+\begin{itemize}[noitemsep]
+  \item If $A$ is square invertible: $\Ap = A^{-1}$.
+  \item If $A$ is tall and full column rank: $\Ap = (A^TA)^{-1}A^T$
+        (left inverse, gives least squares).
+  \item If $A$ is wide and full row rank: $\Ap = A^T(AA^T)^{-1}$
+        (right inverse, gives min-norm solution).
+  \item General rank-deficient: $\Ap$ gives the best of both.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Summary of Numerical Methods}
+% ─────────────────────────────────────────────────────────────────────────────
+
+The table below distinguishes theory (what Strang teaches) from the
+numerical algorithms used to implement that theory on a computer.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{p{3.8cm} p{3.3cm} p{6.8cm}}
+\toprule
+\textbf{Operation} & \textbf{Strang theory} & \textbf{Numerical algorithm used} \\
+\midrule
+RREF, pivots, rank & Gauss-Jordan elimination & Gauss-Jordan with \emph{partial pivoting} \\
+\hline
+LU decomposition & $A = LU$ & $PA = LU$ with partial pivoting \\
+\hline
+Determinant & Product of pivots & Gaussian elim.\ $\times$ sign of permutation \\
+\hline
+Inverse & Gauss-Jordan on $[A \mid I]$ & Same (textbook algorithm) \\
+\hline
+QR / Gram-Schmidt & Classical Gram-Schmidt & \emph{Modified} Gram-Schmidt (more stable) \\
+\hline
+Symmetric eigenvalues & Spectral theorem & \emph{Unshifted QR iteration} \\
+\hline
+General eigenvalues & Char.\ polynomial roots & \emph{Faddeev-LeVerrier} (char.\ poly coeffs) + \emph{Durand-Kerner} (all roots in $\C$) \\
+\hline
+SVD & $A = U\Sigma V^T$ & Eigendecomp.\ of $A^TA$; simpler than Golub-Reinsch \\
+\hline
+Pseudoinverse & $A^+ = V\Sigma^+ U^T$ & Derived from SVD \\
+\hline
+Eigenvectors & Null space of $(A-\lambda I)$ & RREF on $(A - \lambda I)$ \\
+\hline
+Orthonormal bases & Gram-Schmidt & Modified Gram-Schmidt \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Convergence and Precision}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{itemize}[noitemsep]
+  \item All computations use IEEE 754 double precision ($\approx 15$
+        significant decimal digits).
+  \item The global zero tolerance is $\varepsilon = 10^{-9}$.
+  \item QR iteration runs up to $12000 \times n$ iterations with an off-diagonal
+        Frobenius norm convergence check.  For $n \leq 5$ with well-separated
+        eigenvalues, convergence typically occurs in $< 300$ iterations.
+  \item Durand-Kerner runs up to $1000 \times n$ iterations with a
+        max-correction convergence check of $10^{-12}$.
+  \item The SVD via $A^TA$ is reliable for matrices with condition number
+        $\kappa(A) \lesssim 10^6$ (i.e., when squaring the matrix doesn't lose
+        all significant digits).  For ill-conditioned matrices, a proper
+        Golub-Reinsch implementation would be required.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Worked Example}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Consider the symmetric positive-definite matrix
+\[
+  A = \begin{pmatrix} 4 & 2 & 2 \\ 2 & 3 & 1 \\ 2 & 1 & 3 \end{pmatrix}.
+\]
+
+\paragraph{RREF.} $A$ has full rank 3; RREF $= I_3$; pivots at positions
+$(0,0), (1,1), (2,2)$; all four subspaces have their theoretical dimensions.
+
+\paragraph{Determinant.} $\det(A) = 4(9-1) - 2(6-2) + 2(2-6) = 32 - 8 - 8 = 16$.
+
+\paragraph{Eigenvalues.} The characteristic polynomial (from Faddeev-LeVerrier
+applied to the \emph{symmetric} path, i.e., QR iteration here) gives
+$\lambda = 6.828\ldots,\; 2.000,\; 1.172\ldots$
+Their sum $= \trace(A) = 10$ $\checkmark$ and product $= \det(A) = 16$ $\checkmark$.
+
+\paragraph{SVD singular values.} $\sigma_i = \sqrt{\lambda_i(A^TA)} =
+\sqrt{\lambda_i(A^2)} = \lambda_i(A)$ (since $A$ is symmetric PD), giving
+$6.828, 2.000, 1.172$.
+
+\paragraph{Solve $Ax = b$, $b = (1,2,3)^T$.}
+Since $A$ is full rank, the exact solution is
+$\hat{x} = A^{-1}b = (-0.75, 0.75, 1.25)^T$; residual $= 0$.
+
+\paragraph{Jordan form.} All eigenvalues distinct, all $m_a = m_g = 1$;
+$A$ is diagonalizable.  $P^{-1}AP = \Lambda =
+\diag(6.828, 2.000, 1.172)$ (confirmed numerically).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Limitations and Future Work}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{Complex eigenvectors:} When $A$ has complex eigenvalues, only
+        the eigenvalues are reported; eigenvectors require complex arithmetic.
+        A future version could use \texttt{std::complex<double>} for the full
+        complex Schur decomposition.
+  \item \textbf{Numerically rank-deficient matrices:} The rank decision
+        (count pivots with $|$ pivot $|> \varepsilon$) is sensitive to the
+        choice of $\varepsilon$.  A proper implementation would use the SVD
+        and threshold singular values at $\varepsilon \cdot \sigma_1 \cdot
+        \max(m,n)$.
+  \item \textbf{Large matrices:} All algorithms are $O(n^3)$ per iteration;
+        QR iteration adds an $O(n)$ outer loop.  For $n > 20$, specialised
+        LAPACK routines (Householder tridiagonalization + divide-and-conquer)
+        would be necessary.
+  \item \textbf{SVD accuracy for ill-conditioned matrices:} Replace
+        $A^TA$-based SVD with Golub-Reinsch bidiagonalization.
+  \item \textbf{Sparse matrices:} The current implementation stores dense
+        $m \times n$ \texttt{double} arrays.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{References}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{enumerate}[label={[\arabic*]}, leftmargin=2em, noitemsep]
+  \item G.\ Strang, \emph{Introduction to Linear Algebra}, 5th ed.,
+        Wellesley-Cambridge Press, 2016.
+  \item G.\ Strang, \emph{Linear Algebra and Its Applications}, 4th ed.,
+        Thomson Brooks/Cole, 2006.
+  \item G.\ H.\ Golub and C.\ F.\ Van Loan, \emph{Matrix Computations},
+        4th ed., Johns Hopkins University Press, 2013.
+        (Reference for MGS stability analysis, QR iteration, Golub-Reinsch SVD.)
+  \item B.\ N.\ Datta, \emph{Numerical Linear Algebra and Applications},
+        2nd ed., SIAM, 2010.
+        (Reference for Faddeev-LeVerrier algorithm and its numerical properties.)
+  \item I.\ O.\ Kerner, ``Ein Gesamtschrittverfahren zur Berechnung der
+        Nullstellen von Polynomen,'' \emph{Numerische Mathematik}, 8(3):290-294,
+        1966.  (Original paper for the Durand-Kerner root-finding algorithm.)
+\end{enumerate}
+
+\end{document}
