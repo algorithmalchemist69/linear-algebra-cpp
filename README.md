@@ -197,3 +197,7 @@ For a deeper explanation, see:
 ## License
 
 No license file is currently included in this repository.
+
+## Author
+
+Sarvesh S — IIT Madras (ED23B042)
